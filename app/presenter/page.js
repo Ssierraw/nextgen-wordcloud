@@ -1,10 +1,27 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 
-const WORD_COLORS = [
-  "#FA5A50", "#B4DCFA", "#FAB9FF", "#FFFFFF",
-  "#FA5A50", "#B4DCFA", "#FAB9FF", "#FFFFFF",
-];
+function getColorByRatio(ratio) {
+  if (ratio >= 0.8) return "#FA5A50";
+  if (ratio >= 0.5) return "#FAB9FF";
+  if (ratio >= 0.2) return "#B4DCFA";
+  return "#FFFFFF";
+}
+
+function getGlow(ratio, color) {
+  if (ratio < 0.15) return "none";
+  const intensity = Math.round(ratio * 65);
+  const hex = intensity.toString(16).padStart(2, "0");
+  const blur = 15 + ratio * 45;
+  return `0 0 ${blur}px ${color}${hex}`;
+}
+
+function getFloatAnimation(fontSize, ratio) {
+  if (ratio < 0.25) return "none";
+  if (fontSize > 55) return "floatSlow 6s ease-in-out infinite";
+  if (fontSize > 35) return "float 4s ease-in-out infinite";
+  return "float 3s ease-in-out infinite";
+}
 
 function layoutWords(wordMap, width, height) {
   const entries = Object.entries(wordMap).sort((a, b) => b[1] - a[1]);
@@ -16,10 +33,10 @@ function layoutWords(wordMap, width, height) {
   const cx = width / 2;
   const cy = height / 2;
 
-  entries.forEach(([word, count], idx) => {
+  entries.forEach(([word, count]) => {
     const ratio = maxCount === minCount ? 1 : (count - minCount) / (maxCount - minCount);
     const fontSize = Math.max(14, Math.min(80, 14 + ratio * 66));
-    const color = WORD_COLORS[idx % WORD_COLORS.length];
+    const color = getColorByRatio(ratio);
 
     for (let attempt = 0; attempt < 350; attempt++) {
       const angle = attempt * 0.3;
@@ -39,7 +56,7 @@ function layoutWords(wordMap, width, height) {
       );
 
       if (!overlap) {
-        placed.push({ word, count, fontSize, color, ...box, delay: idx * 0.035 });
+        placed.push({ word, count, ratio, fontSize, color, ...box });
         break;
       }
     }
@@ -52,7 +69,9 @@ export default function PresenterPage() {
   const [wordMap, setWordMap] = useState({});
   const [dims, setDims] = useState({ w: 1200, h: 700 });
   const [showReset, setShowReset] = useState(false);
+  const [pulsingWords, setPulsingWords] = useState(new Set());
   const containerRef = useRef(null);
+  const seenWordsRef = useRef(new Set());
 
   useEffect(() => {
     const resize = () => {
@@ -70,7 +89,18 @@ export default function PresenterPage() {
       try {
         const res = await fetch("/api/words");
         const data = await res.json();
-        setWordMap(data);
+        setWordMap((prev) => {
+          const boosted = new Set(
+            Object.entries(data)
+              .filter(([word, count]) => prev[word] && count > prev[word])
+              .map(([word]) => word)
+          );
+          if (boosted.size > 0) {
+            setPulsingWords(boosted);
+            setTimeout(() => setPulsingWords(new Set()), 750);
+          }
+          return data;
+        });
       } catch {}
     };
     poll();
@@ -82,6 +112,7 @@ export default function PresenterPage() {
     try {
       await fetch("/api/words", { method: "DELETE" });
       setWordMap({});
+      seenWordsRef.current.clear();
       setShowReset(false);
     } catch {}
   };
@@ -89,6 +120,10 @@ export default function PresenterPage() {
   const words = layoutWords(wordMap, dims.w, dims.h - 110);
   const totalCount = Object.values(wordMap).reduce((a, b) => a + b, 0);
   const uniqueCount = Object.keys(wordMap).length;
+
+  useEffect(() => {
+    words.forEach((w) => seenWordsRef.current.add(w.word));
+  });
 
   return (
     <div
@@ -199,30 +234,45 @@ export default function PresenterPage() {
             </div>
           </div>
         )}
-        {words.map((w, i) => (
-          <div
-            key={`${w.word}-${i}`}
-            style={{
-              position: "absolute",
-              left: w.x,
-              top: w.y,
-              fontSize: w.fontSize,
-              color: w.color,
-              fontWeight: w.count > 2 ? 700 : 400,
-              fontFamily:
-                w.fontSize > 44
-                  ? "'DM Sans', sans-serif"
-                  : "'DM Sans', sans-serif",
-              whiteSpace: "nowrap",
-              opacity: 0,
-              animation: `wordAppear 0.6s ease ${w.delay}s forwards`,
-              textShadow: w.fontSize > 44 ? `0 0 50px ${w.color}18` : "none",
-              transition: "all 0.5s ease",
-            }}
-          >
-            {w.word}
-          </div>
-        ))}
+        {words.map((w, i) => {
+          const isNew = !seenWordsRef.current.has(w.word);
+          const isPulsing = pulsingWords.has(w.word);
+
+          let animation;
+          if (isPulsing) {
+            animation = "wordPulse 0.75s ease forwards";
+          } else if (isNew) {
+            animation = `wordAppear 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 0.04}s both`;
+          } else {
+            animation = getFloatAnimation(w.fontSize, w.ratio);
+          }
+
+          const fontWeight =
+            w.ratio >= 0.8 ? 800 : w.ratio >= 0.5 ? 700 : w.ratio >= 0.2 ? 600 : 400;
+
+          return (
+            <div
+              key={w.word}
+              style={{
+                position: "absolute",
+                left: w.x,
+                top: w.y,
+                fontSize: w.fontSize,
+                color: w.color,
+                fontWeight,
+                fontFamily: "'DM Sans', sans-serif",
+                whiteSpace: "nowrap",
+                animation,
+                textShadow: getGlow(w.ratio, w.color),
+                transition: isNew ? "none" : "left 0.5s ease, top 0.5s ease",
+                opacity: isNew ? undefined : 1,
+                transformOrigin: "center center",
+              }}
+            >
+              {w.word}
+            </div>
+          );
+        })}
       </div>
 
       {/* Bottom controls */}
