@@ -101,6 +101,10 @@ function getGlow(ratio, tierIdx) {
   return `0 0 ${20 + ratio * 45}px ${glowColor}${hex}`;
 }
 
+function capitalize(word) {
+  return word.charAt(0).toUpperCase() + word.slice(1);
+}
+
 function getFloatAnimation(fontSize, ratio) {
   if (ratio < 0.25) return "none";
   if (fontSize > 55) return "floatSlow 6s ease-in-out infinite";
@@ -372,7 +376,7 @@ export default function PresenterPage() {
                 transformOrigin: "center center",
               }}
             >
-              {w.word}
+              {capitalize(w.word)}
             </div>
           );
         })}
