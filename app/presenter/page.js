@@ -1,11 +1,33 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 
-function getColorByRatio(ratio) {
-  if (ratio >= 0.8) return "#FA5A50";
-  if (ratio >= 0.5) return "#FAB9FF";
-  if (ratio >= 0.2) return "#B4DCFA";
-  return "#FFFFFF";
+// FNV-1a hash — deterministic per word, good distribution
+function wordHash(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+    h = h >>> 0;
+  }
+  return h;
+}
+
+// Tonal families per frequency tier
+const COLOR_TIERS = [
+  ["#FA5A50", "#FF7063", "#E84035", "#FF8575", "#FF6458"],   // coral/red  — top
+  ["#FAB9FF", "#F0ABFC", "#E879F9", "#F5D0FE", "#EE88FF"],   // pink/magenta
+  ["#B4DCFA", "#93C5FD", "#7BC8F8", "#60B4FF", "#BAE6FF"],   // blue
+  ["#FFFFFF", "#E8EEFF", "#D8E0FF", "#C8D8FF"],               // white/silver — low
+];
+
+function getColor(ratio, hash) {
+  let tier;
+  if (ratio >= 0.75) tier = 0;
+  else if (ratio >= 0.45) tier = 1;
+  else if (ratio >= 0.2) tier = 2;
+  else tier = 3;
+  const palette = COLOR_TIERS[tier];
+  return palette[hash % palette.length];
 }
 
 function getGlow(ratio, color) {
@@ -35,24 +57,32 @@ function layoutWords(wordMap, width, height) {
 
   entries.forEach(([word, count]) => {
     const ratio = maxCount === minCount ? 1 : (count - minCount) / (maxCount - minCount);
-    const fontSize = Math.max(14, Math.min(80, 14 + ratio * 66));
-    const color = getColorByRatio(ratio);
+    const hash = wordHash(word);
 
-    for (let attempt = 0; attempt < 350; attempt++) {
-      const angle = attempt * 0.3;
-      const radius = attempt * 2;
+    // Power curve — clearer hierarchy between popular and rare words
+    const fontSize = Math.max(12, Math.min(86, 12 + Math.pow(ratio, 1.4) * 74));
+    const color = getColor(ratio, hash);
+
+    // Per-word spiral parameters — each word fans out from a unique angle
+    const startAngle = (hash % 628) / 100;               // 0 – 2π
+    const angleStep  = 0.27 + (hash % 12) * 0.01;        // 0.27 – 0.38
+    const vCompress  = 0.48 + (hash % 18) * 0.01;        // 0.48 – 0.65
+
+    for (let attempt = 0; attempt < 450; attempt++) {
+      const angle = startAngle + attempt * angleStep;
+      const radius = attempt * 2.1;
       const x = cx + radius * Math.cos(angle);
-      const y = cy + radius * Math.sin(angle) * 0.55;
+      const y = cy + radius * Math.sin(angle) * vCompress;
       const estW = word.length * fontSize * 0.52;
       const estH = fontSize * 1.25;
       const box = { x: x - estW / 2, y: y - estH / 2, w: estW, h: estH };
 
-      if (box.x < 5 || box.x + box.w > width - 5 || box.y < 5 || box.y + box.h > height - 5)
+      if (box.x < 8 || box.x + box.w > width - 8 || box.y < 8 || box.y + box.h > height - 8)
         continue;
 
       const overlap = placed.some(
         (p) =>
-          !(box.x > p.x + p.w + 6 || box.x + box.w < p.x - 6 || box.y > p.y + p.h + 3 || box.y + box.h < p.y - 3)
+          !(box.x > p.x + p.w + 8 || box.x + box.w < p.x - 8 || box.y > p.y + p.h + 5 || box.y + box.h < p.y - 5)
       );
 
       if (!overlap) {
