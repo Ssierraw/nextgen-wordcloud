@@ -81,24 +81,24 @@ function wordHash(str) {
   return h;
 }
 
-const COLOR_TIERS = [
-  ["#FA5A50", "#FF7063", "#E84035", "#FF8575", "#FF6458"],
-  ["#FAB9FF", "#F0ABFC", "#E879F9", "#F5D0FE", "#EE88FF"],
-  ["#B4DCFA", "#93C5FD", "#7BC8F8", "#60B4FF", "#BAE6FF"],
-  ["#FFFFFF", "#E8EEFF", "#D8E0FF", "#C8D8FF"],
+// Text: white-family per tier. Glow: CI&T color stays, but in the halo — not the text.
+const TIER_COLORS = [
+  { text: "#FFFFFF",                 glow: "#FA5A50" },  // top — white + coral glow
+  { text: "#FFF0EE",                 glow: "#FAB9FF" },  // mid — warm white + pink glow
+  { text: "#EEF4FF",                 glow: "#93C5FD" },  // lower — cool white + blue glow
+  { text: "rgba(255,255,255,0.65)",  glow: null       },  // bottom — translucent, no glow
 ];
 
-function getColor(ratio, hash) {
-  const tier = ratio >= 0.75 ? 0 : ratio >= 0.45 ? 1 : ratio >= 0.2 ? 2 : 3;
-  const palette = COLOR_TIERS[tier];
-  return palette[hash % palette.length];
+function getTierIdx(ratio) {
+  return ratio >= 0.75 ? 0 : ratio >= 0.45 ? 1 : ratio >= 0.2 ? 2 : 3;
 }
 
-function getGlow(ratio, color) {
-  if (ratio < 0.15) return "none";
-  const intensity = Math.round(ratio * 65);
+function getGlow(ratio, tierIdx) {
+  const glowColor = TIER_COLORS[tierIdx]?.glow;
+  if (!glowColor || ratio < 0.2) return "none";
+  const intensity = Math.round(ratio * 80);
   const hex = intensity.toString(16).padStart(2, "0");
-  return `0 0 ${15 + ratio * 45}px ${color}${hex}`;
+  return `0 0 ${20 + ratio * 45}px ${glowColor}${hex}`;
 }
 
 function getFloatAnimation(fontSize, ratio) {
@@ -120,7 +120,8 @@ function layoutWords(wordMap, width, height) {
     const ratio = maxCount === minCount ? 1 : (count - minCount) / (maxCount - minCount);
     const hash = wordHash(word);
     const fontSize = Math.max(12, Math.min(86, 12 + Math.pow(ratio, 1.4) * 74));
-    const color = getColor(ratio, hash);
+    const tierIdx = getTierIdx(ratio);
+    const color = TIER_COLORS[tierIdx].text;
     const startAngle = (hash % 628) / 100;
     const angleStep  = 0.27 + (hash % 12) * 0.01;
     const vCompress  = 0.48 + (hash % 18) * 0.01;
@@ -138,7 +139,7 @@ function layoutWords(wordMap, width, height) {
       const overlap = placed.some(
         (p) => !(box.x > p.x + p.w + 8 || box.x + box.w < p.x - 8 || box.y > p.y + p.h + 5 || box.y + box.h < p.y - 5)
       );
-      if (!overlap) { placed.push({ word, count, ratio, fontSize, color, ...box }); break; }
+      if (!overlap) { placed.push({ word, count, ratio, tierIdx, fontSize, color, ...box }); break; }
     }
   });
   return placed;
@@ -365,7 +366,7 @@ export default function PresenterPage() {
                 fontFamily: "'DM Sans', sans-serif",
                 whiteSpace: "nowrap",
                 animation,
-                textShadow: getGlow(w.ratio, w.color),
+                textShadow: getGlow(w.ratio, w.tierIdx),
                 transition: isNew ? "none" : "left 0.5s ease, top 0.5s ease",
                 opacity: isNew ? undefined : 1,
                 transformOrigin: "center center",
