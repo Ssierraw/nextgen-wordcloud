@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import LogoNextgen from "./components/LogoNextgen";
 
 export default function ParticipantPage() {
   const [word, setWord] = useState("");
@@ -69,21 +70,8 @@ export default function ParticipantPage() {
       />
 
       {/* Branding */}
-      <div
-        style={{
-          fontSize: 13, fontFamily: "'DM Sans', sans-serif", fontWeight: 700,
-          color: "#FA5A50", letterSpacing: 4, marginBottom: 8,
-        }}
-      >
-        NEXT-GEN BOOTCAMP
-      </div>
-      <div
-        style={{
-          fontSize: 11, fontFamily: "'DM Sans', sans-serif",
-          color: "#B4DCFA", letterSpacing: 2, marginBottom: 48, opacity: 0.6,
-        }}
-      >
-        CI&T
+      <div style={{ marginBottom: 44 }}>
+        <LogoNextgen scale={1} />
       </div>
 
       {/* Question */}

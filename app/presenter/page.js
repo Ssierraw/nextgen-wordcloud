@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import LogoNextgen from "../components/LogoNextgen";
 
 // ─── Aurora WebGL shader ──────────────────────────────────────────────────────
 const AURORA_VS = `attribute vec2 a_pos;
@@ -105,6 +106,14 @@ function capitalize(word) {
   return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
+// 8 discrete size scales — clearer visual hierarchy
+const FONT_SCALES = [13, 18, 24, 32, 42, 54, 68, 86];
+
+function getFontSize(ratio) {
+  const idx = Math.min(7, Math.floor(Math.pow(ratio, 1.3) * 8));
+  return FONT_SCALES[idx];
+}
+
 function getFloatAnimation(fontSize, ratio) {
   if (ratio < 0.25) return "none";
   if (fontSize > 55) return "floatSlow 6s ease-in-out infinite";
@@ -123,7 +132,7 @@ function layoutWords(wordMap, width, height) {
   entries.forEach(([word, count]) => {
     const ratio = maxCount === minCount ? 1 : (count - minCount) / (maxCount - minCount);
     const hash = wordHash(word);
-    const fontSize = Math.max(12, Math.min(86, 12 + Math.pow(ratio, 1.4) * 74));
+    const fontSize = getFontSize(ratio);
     const tierIdx = getTierIdx(ratio);
     const color = TIER_COLORS[tierIdx].text;
     const startAngle = (hash % 628) / 100;
@@ -312,14 +321,7 @@ export default function PresenterPage() {
           padding: "22px 36px", zIndex: 10,
         }}
       >
-        <div style={{ display: "flex", alignItems: "baseline", gap: 16 }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color: "#FA5A50", fontFamily: "'DM Sans', sans-serif", letterSpacing: 3 }}>
-            NEXT-GEN BOOTCAMP
-          </span>
-          <span style={{ fontSize: 12, color: "rgba(180,220,250,0.35)", fontFamily: "'DM Sans', sans-serif", letterSpacing: 2 }}>
-            CI&T
-          </span>
-        </div>
+        <LogoNextgen scale={0.72} />
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <span style={{ fontSize: 14, color: "rgba(180,220,250,0.45)", fontFamily: "'DM Sans', sans-serif" }}>
             {totalCount} {totalCount === 1 ? "resposta" : "respostas"} · {uniqueCount}{" "}

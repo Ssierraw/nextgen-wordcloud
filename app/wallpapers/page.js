@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import LogoNextgen from "../components/LogoNextgen";
 
 // ─── Vertex shader ────────────────────────────────────────────────────────────
 const VS_SRC = `attribute vec2 a_pos;
@@ -412,14 +413,9 @@ export default function WallpapersPage() {
         fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase",
         color: "rgba(232,238,255,0.7)",
       }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 10, pointerEvents: "auto" }}>
-          <div style={{
-            width: 22, height: 22, borderRadius: 6, background: "#FA5A50",
-            display: "grid", placeItems: "center",
-            color: "#000050", fontWeight: 700, fontSize: 11, fontFamily: mono, letterSpacing: 0,
-          }}>C</div>
-          <span style={{ color: "#fff", fontWeight: 600 }}>CI&amp;T</span>
-          <span style={{ opacity: 0.4 }}>/</span>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 14, pointerEvents: "auto" }}>
+          <LogoNextgen scale={0.6} />
+          <span style={{ opacity: 0.3 }}>·</span>
           <span>OS · Wallpapers</span>
         </div>
 
