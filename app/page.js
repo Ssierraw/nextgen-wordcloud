@@ -199,7 +199,7 @@ export default function ParticipantPage() {
       <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
         {/* Branding */}
         <div style={{ marginBottom: 44 }}>
-          <LogoCIT height={56} />
+          <LogoCIT height={90} />
         </div>
 
         {/* Question */}

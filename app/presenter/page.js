@@ -321,7 +321,7 @@ export default function PresenterPage() {
           padding: "22px 36px", zIndex: 10,
         }}
       >
-        <LogoCIT height={52} />
+        <LogoCIT height={72} />
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <span style={{ fontSize: 14, color: "rgba(180,220,250,0.45)", fontFamily: "'DM Sans', sans-serif" }}>
             {totalCount} {totalCount === 1 ? "resposta" : "respostas"} · {uniqueCount}{" "}
