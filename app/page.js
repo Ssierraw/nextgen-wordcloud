@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import LogoNextgen from "./components/LogoNextgen";
+import LogoCIT from "./components/LogoCIT";
 
 export default function ParticipantPage() {
   const [word, setWord] = useState("");
@@ -71,7 +71,7 @@ export default function ParticipantPage() {
 
       {/* Branding */}
       <div style={{ marginBottom: 44 }}>
-        <LogoNextgen scale={1} />
+        <LogoCIT size={56} />
       </div>
 
       {/* Question */}

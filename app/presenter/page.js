@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import LogoNextgen from "../components/LogoNextgen";
+import LogoCIT from "../components/LogoCIT";
 
 // ─── Aurora WebGL shader ──────────────────────────────────────────────────────
 const AURORA_VS = `attribute vec2 a_pos;
@@ -321,7 +321,7 @@ export default function PresenterPage() {
           padding: "22px 36px", zIndex: 10,
         }}
       >
-        <LogoNextgen scale={0.72} />
+        <LogoCIT size={34} />
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <span style={{ fontSize: 14, color: "rgba(180,220,250,0.45)", fontFamily: "'DM Sans', sans-serif" }}>
             {totalCount} {totalCount === 1 ? "resposta" : "respostas"} · {uniqueCount}{" "}
