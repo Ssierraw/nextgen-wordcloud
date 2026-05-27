@@ -71,7 +71,7 @@ export default function ParticipantPage() {
 
       {/* Branding */}
       <div style={{ marginBottom: 44 }}>
-        <LogoCIT size={56} />
+        <LogoCIT height={56} />
       </div>
 
       {/* Question */}
